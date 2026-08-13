@@ -41,6 +41,14 @@ import { JSDOM } from "jsdom";
  * is why the persona fixtures are realistic `ManagedAgent`-shaped rows with
  * real pubkeys, and why both one-row and two-row cases are exercised.
  *
+ * The fixtures also model the two navigation shapes an archived persona is
+ * reached through, so a gate conditioned on either shape is caught: the summary
+ * mount uses the persona-target shape (`isSelf: false`, `pubkey: null` — a
+ * persona with no primary managed agent computes `isSelf: false` in
+ * production), and the runtime mount covers both persona-target navigation
+ * (`currentPubkey: null`) and the explicit-pubkey path (`currentPubkey` set to
+ * an archived row, the route used to unarchive an identity).
+ *
  * Mounting the two intermediates requires importing their modules, which
  * transitively load AgentSessionTranscriptList — that reads
  * `import.meta.env.VITE_SHOW_TRANSCRIPT_ACP_SOURCE` at module-evaluation time.
@@ -164,8 +172,15 @@ let ProfileRuntimeTabContent;
 // The `hasInstances` gate: ProfileRuntimeTabContent renders
 // ProfileInstancesSection only when a bucket is non-empty. Every other section
 // input is empty/false so the archived bucket alone decides.
-const runtimeTabProps = (archivedInstances) => ({
-  currentPubkey: null,
+//
+// `currentPubkey` models the navigation shape: `null` is persona-target
+// navigation; a non-null value equal to an archived row's pubkey is the
+// explicit-pubkey path (how an archived identity is reached to unarchive it).
+// Both shapes must keep the section visible, so a gate mutation that conditions
+// on `currentPubkey` — e.g. `(…gate…) && currentPubkey === null` — is caught by
+// the explicit-pubkey case.
+const runtimeTabProps = (archivedInstances, currentPubkey = null) => ({
+  currentPubkey,
   diagnosticsFields: [],
   diagnosticsSummary: null,
   configurationFields: [],
@@ -180,8 +195,17 @@ const runtimeTabProps = (archivedInstances) => ({
 // when the runtime section has content. For an owner-bot persona with no live
 // managed agent, no config/diagnostics rows, and logs off, the archived bucket
 // alone decides. `tab="channels"` keeps the active tab content light (isBot
-// always yields a Channels tab); `isSelf` skips the follow/instantiate action
-// rows so their mutation objects are never consumed.
+// always yields a Channels tab).
+//
+// This models the persona-target navigation shape — the real state an
+// all-archived persona is opened in. That persona has no primary managed agent,
+// so its `effectivePubkey` is null and UserProfilePanel computes `isSelf:
+// false`; we mirror that with `isSelf: false, pubkey: null`. Because
+// `!isSelf && pubkey` is then false, the follow/instantiate action rows are
+// still not rendered, so no action mutation objects are consumed — the mount
+// stays light while matching production. (A gate mutation that conditions on
+// `isSelf` — e.g. `isSelf && (…gate…)` — would strand every real persona
+// target; this shape catches it, whereas an `isSelf: true` fixture would not.)
 const summaryProps = (archivedInstances) => ({
   activityAgent: null,
   callerChannelId: null,
@@ -211,7 +235,7 @@ const summaryProps = (archivedInstances) => ({
   isAgentActionPending: false,
   isFollowing: false,
   isOwner: true,
-  isSelf: true,
+  isSelf: false,
   instances: [],
   archivedInstances,
   managedAgent: undefined,
@@ -235,7 +259,7 @@ const summaryProps = (archivedInstances) => ({
   onTabChange: () => {},
   presenceStatus: undefined,
   profile: null,
-  pubkey: ARCHIVED_PK_ONE,
+  pubkey: null,
   relayAgent: undefined,
   tab: "channels",
   unfollowMutation: {},
@@ -286,6 +310,16 @@ test("gate: hasInstances renders the Instances section for two archived rows", (
 test("gate: hasInstances omits the Instances section with no instances", () => {
   render(createElement(ProfileRuntimeTabContent, runtimeTabProps([])));
   assert.equal(screen.queryByTestId("user-profile-instances-section"), null);
+});
+
+test("gate: hasInstances renders the Instances section on the explicit-pubkey path", () => {
+  render(
+    createElement(
+      ProfileRuntimeTabContent,
+      runtimeTabProps(ONE_ARCHIVED, ARCHIVED_PK_ONE),
+    ),
+  );
+  assert.ok(screen.getByTestId("user-profile-instances-section"));
 });
 
 test("gate: showRuntimeTab shows the Runtime tab for one archived row", () => {
