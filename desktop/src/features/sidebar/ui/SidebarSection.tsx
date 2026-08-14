@@ -37,6 +37,10 @@ import {
   SidebarMenuItem,
 } from "@/shared/ui/sidebar";
 import { ChannelActivityPopover } from "@/features/sidebar/ui/ChannelActivityPopover";
+import {
+  SidebarMemberAvatarStack,
+  type SidebarMemberAvatarStackData,
+} from "@/features/sidebar/ui/SidebarMemberAvatarStack";
 import { useAppShell } from "@/app/AppShellContext";
 
 const SECTION_LABEL_BUTTON_CLASS =
@@ -258,6 +262,7 @@ export function ChannelMenuButton({
   activeWorking,
   isMuted,
   dmParticipants,
+  memberAvatars,
   presenceStatus,
   onSelectChannel,
 }: {
@@ -269,6 +274,7 @@ export function ChannelMenuButton({
   activeWorking?: ActiveChannelTurnSummary;
   isMuted?: boolean;
   dmParticipants?: SidebarDmParticipant[];
+  memberAvatars?: SidebarMemberAvatarStackData;
   presenceStatus?: PresenceStatus;
   onSelectChannel: (channelId: string) => void;
 }) {
@@ -299,23 +305,13 @@ export function ChannelMenuButton({
       "sidebar-muted-content opacity-50 dark:opacity-45",
   );
 
-  const button = (
-    <SidebarMenuButton
-      className={cn(
-        "data-[active=true]:font-normal",
-        isActive
-          ? "group-hover/menu-item:bg-sidebar-active group-hover/menu-item:text-sidebar-active-foreground"
-          : "group-hover/menu-item:bg-sidebar-accent group-hover/menu-item:text-sidebar-foreground",
-        hasTopLevelUnread &&
-          "font-bold text-sidebar-foreground hover:text-sidebar-foreground data-[active=true]:font-bold",
-      )}
-      data-channel-id={channel.id}
-      data-testid={`channel-${channel.name}`}
-      isActive={isActive}
-      onClick={() => onSelectChannel(channel.id)}
-      tooltip={resolvedLabel}
-      type="button"
-    >
+  const memberCluster =
+    channel.channelType !== "dm" && memberAvatars?.members.length
+      ? memberAvatars
+      : undefined;
+
+  const rowContent = (
+    <>
       <SidebarChannelIcon
         channel={channel}
         className={
@@ -357,6 +353,47 @@ export function ChannelMenuButton({
       {hasThreadUnread ? (
         <UnreadDotBadge channelName={channel.name} className="ml-auto" />
       ) : null}
+    </>
+  );
+
+  const button = (
+    <SidebarMenuButton
+      className={cn(
+        "data-[active=true]:font-normal",
+        isActive
+          ? "group-hover/menu-item:bg-sidebar-active group-hover/menu-item:text-sidebar-active-foreground"
+          : "group-hover/menu-item:bg-sidebar-accent group-hover/menu-item:text-sidebar-foreground",
+        hasTopLevelUnread &&
+          "font-bold text-sidebar-foreground hover:text-sidebar-foreground data-[active=true]:font-bold",
+        memberCluster && "h-auto min-h-8 flex-col items-stretch gap-0.5",
+      )}
+      data-channel-id={channel.id}
+      data-testid={`channel-${channel.name}`}
+      isActive={isActive}
+      onClick={() => onSelectChannel(channel.id)}
+      tooltip={resolvedLabel}
+      type="button"
+    >
+      {memberCluster ? (
+        <>
+          <span className="flex w-full min-w-0 items-center gap-2">
+            {rowContent}
+          </span>
+          {/* A div, not a span — the menu-button variants truncate the last
+              child span, which would clip the avatar cluster. pl-6 tucks it
+              under the label, past the 16px icon + 8px gap. */}
+          <SidebarMemberAvatarStack
+            className={cn(
+              "pl-6 group-data-[collapsible=icon]:hidden",
+              inactiveContentOpacity,
+            )}
+            members={memberCluster.members}
+            overflowCount={memberCluster.overflowCount}
+          />
+        </>
+      ) : (
+        rowContent
+      )}
     </SidebarMenuButton>
   );
 

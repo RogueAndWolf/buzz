@@ -28,6 +28,7 @@ const overrides = new Set([
   "src/features/messages/lib/threadPanel.ts:395",
   "src/features/projects/ui/ProjectsView.tsx:166",
   "src/features/projects/ui/ProjectsOverviewPanel.tsx:209",
+  "src/features/sidebar/useSidebarMemberAvatars.ts:43",
 ]);
 
 await runPubkeyTruncationCheck({

@@ -42,6 +42,7 @@ import {
   SidebarMenuItem,
 } from "@/shared/ui/sidebar";
 import { ChannelMenuButton } from "@/features/sidebar/ui/SidebarSection";
+import { useSidebarMemberAvatars } from "@/features/sidebar/useSidebarMemberAvatars";
 import { ChannelContextMenuItems } from "@/features/sidebar/ui/ChannelContextMenu";
 import { deferMenuAction } from "@/features/sidebar/ui/sidebarMenuHelpers";
 import {
@@ -426,6 +427,7 @@ export function ChannelGroupSection({
 }) {
   const contentId = `sidebar-${listTestId}`;
   const [actionsMenuOpen, setActionsMenuOpen] = useState(false);
+  const memberAvatarsByChannelId = useSidebarMemberAvatars(items);
 
   const channelList =
     items.length > 0 ? (
@@ -445,6 +447,7 @@ export function ChannelGroupSection({
                       isActive={
                         isActiveChannel && selectedChannelId === channel.id
                       }
+                      memberAvatars={memberAvatarsByChannelId?.[channel.id]}
                       onSelectChannel={onSelectChannel}
                     />
                   </DraggableChannelRow>
@@ -458,6 +461,7 @@ export function ChannelGroupSection({
                     isActive={
                       isActiveChannel && selectedChannelId === channel.id
                     }
+                    memberAvatars={memberAvatarsByChannelId?.[channel.id]}
                     onSelectChannel={onSelectChannel}
                   />
                 )}
@@ -620,6 +624,7 @@ export function CustomChannelSection({
 }) {
   const contentId = `sidebar-section-${section.id}`;
   const [actionsMenuOpen, setActionsMenuOpen] = useState(false);
+  const memberAvatarsByChannelId = useSidebarMemberAvatars(channels);
 
   return (
     <SortableSectionShell sectionId={section.id}>
@@ -751,6 +756,9 @@ export function CustomChannelSection({
                                 isActive={
                                   isActiveChannel &&
                                   selectedChannelId === channel.id
+                                }
+                                memberAvatars={
+                                  memberAvatarsByChannelId?.[channel.id]
                                 }
                                 onSelectChannel={onSelectChannel}
                               />
