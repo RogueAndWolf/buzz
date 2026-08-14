@@ -5843,6 +5843,7 @@ async function handleGetChannels(
         archived_at: isArchived ? new Date().toISOString() : null,
         participants: pTags,
         participant_pubkeys: pTags,
+        member_pubkeys: pTags,
         ttl_seconds: getTag("ttl") ? Number(getTag("ttl")) : null,
         ttl_deadline: getTag("ttl_deadline") ?? null,
         is_member: memberSet.has(channelId),
