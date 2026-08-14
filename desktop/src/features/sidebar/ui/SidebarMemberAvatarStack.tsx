@@ -1,3 +1,5 @@
+import * as React from "react";
+
 import { cn } from "@/shared/lib/cn";
 import { UserAvatar } from "@/shared/ui/UserAvatar";
 
@@ -17,7 +19,9 @@ export type SidebarMemberAvatarStackData = {
  * channel rows. Pure decoration: aria-hidden, no per-avatar interaction — the
  * channel row stays the single click target. Follows the `ProjectPeopleStack`
  * recipe (overlap + z-cascade + "+N" pill), shrunk and quieted for the
- * sidebar.
+ * sidebar. One playful flourish: hovering anywhere on the cluster plays every
+ * animated avatar in it at once — a single hover state on the container,
+ * passed down as the controlled `animated` prop.
  */
 export function SidebarMemberAvatarStack({
   className,
@@ -28,6 +32,8 @@ export function SidebarMemberAvatarStack({
   members: SidebarMemberAvatar[];
   overflowCount: number;
 }) {
+  const [isHovered, setIsHovered] = React.useState(false);
+
   if (members.length === 0) {
     return null;
   }
@@ -38,6 +44,8 @@ export function SidebarMemberAvatarStack({
     <div
       aria-hidden="true"
       className={cn("flex items-center -space-x-1", className)}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
       title={overflowCount > 0 ? `${names} +${overflowCount} more` : names}
     >
       {members.map((member, index) => (
@@ -48,6 +56,7 @@ export function SidebarMemberAvatarStack({
           style={{ zIndex: members.length - index }}
         >
           <UserAvatar
+            animated={isHovered}
             avatarUrl={member.avatarUrl}
             className="h-4 w-4 ring-1 ring-sidebar"
             displayName={member.label}

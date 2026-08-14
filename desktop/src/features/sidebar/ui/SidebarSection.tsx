@@ -365,7 +365,10 @@ export function ChannelMenuButton({
           : "group-hover/menu-item:bg-sidebar-accent group-hover/menu-item:text-sidebar-foreground",
         hasTopLevelUnread &&
           "font-bold text-sidebar-foreground hover:text-sidebar-foreground data-[active=true]:font-bold",
-        memberCluster && "h-auto min-h-8 flex-col items-stretch gap-0.5",
+        // pb-1 pulls the row's bottom edge in under the cluster (base p-2 was
+        // reading loose between channels); longhand pb wins over the p
+        // shorthand in Tailwind's utility order.
+        memberCluster && "h-auto min-h-8 flex-col items-stretch gap-0.5 pb-1",
       )}
       data-channel-id={channel.id}
       data-testid={`channel-${channel.name}`}

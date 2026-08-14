@@ -22,6 +22,14 @@ type UserAvatarProps = {
   className?: string;
   fallbackDelayMs?: number;
   testId?: string;
+  /**
+   * Controlled animation state. Leave undefined for the default behavior
+   * (an animated avatar plays while itself hovered). Pass a boolean to drive
+   * playback from the parent instead — e.g. a group-hover container that
+   * plays every avatar at once — which also disables the built-in per-avatar
+   * hover listeners. Ignored for non-animated avatar URLs.
+   */
+  animated?: boolean;
 };
 
 export function UserAvatar({
@@ -32,14 +40,19 @@ export function UserAvatar({
   className,
   fallbackDelayMs = 200,
   testId,
+  animated,
 }: UserAvatarProps) {
   const initials = getInitials(displayName);
   // Animated avatars show their static poster frame until hovered, then play
   // the animation.
-  const animated = parseAnimatedAvatarUrl(avatarUrl);
+  const animatedAvatar = parseAnimatedAvatarUrl(avatarUrl);
   const [isHovered, setIsHovered] = React.useState(false);
-  const src = animated
-    ? rewriteRelayUrl(isHovered ? animated.animationUrl : animated.posterUrl)
+  const selfHover = animatedAvatar !== null && animated === undefined;
+  const isPlaying = animated ?? isHovered;
+  const src = animatedAvatar
+    ? rewriteRelayUrl(
+        isPlaying ? animatedAvatar.animationUrl : animatedAvatar.posterUrl,
+      )
     : avatarUrl
       ? rewriteRelayUrl(avatarUrl)
       : null;
@@ -48,14 +61,18 @@ export function UserAvatar({
     <Avatar
       // Animated avatars carry their own backdrop disc and transparent
       // surroundings — any container fill would flatten the pop-out.
-      className={cn(sizeClasses[size], !animated && "shadow-xs", className)}
-      onMouseEnter={animated ? () => setIsHovered(true) : undefined}
-      onMouseLeave={animated ? () => setIsHovered(false) : undefined}
+      className={cn(
+        sizeClasses[size],
+        !animatedAvatar && "shadow-xs",
+        className,
+      )}
+      onMouseEnter={selfHover ? () => setIsHovered(true) : undefined}
+      onMouseLeave={selfHover ? () => setIsHovered(false) : undefined}
     >
       {src ? (
         <AvatarImage
           alt={`${displayName} avatar`}
-          className={cn("object-cover", !animated && "bg-secondary")}
+          className={cn("object-cover", !animatedAvatar && "bg-secondary")}
           data-testid={testId ? `${testId}-image` : undefined}
           referrerPolicy="no-referrer"
           src={src}
