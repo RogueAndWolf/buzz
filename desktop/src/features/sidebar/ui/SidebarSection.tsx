@@ -368,7 +368,7 @@ export function ChannelMenuButton({
         // pb-1 pulls the row's bottom edge in under the cluster (base p-2 was
         // reading loose between channels); longhand pb wins over the p
         // shorthand in Tailwind's utility order.
-        memberCluster && "h-auto min-h-8 flex-col items-stretch gap-0.5 pb-1",
+        memberCluster && "h-auto min-h-8 flex-col items-stretch gap-0.5 pb-0.5",
       )}
       data-channel-id={channel.id}
       data-testid={`channel-${channel.name}`}
